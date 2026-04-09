@@ -29,6 +29,7 @@ const createPatient = async (req: Request) => {
   });
   return result;
 };
+
 const createDoctor = async (req: Request) => {
 
   if (req.file) {
@@ -54,7 +55,33 @@ const createDoctor = async (req: Request) => {
   return result;
 };
 
+const createAdmin = async (req: Request) => {
+
+  if (req.file) {
+    const uploadedResult = await fileUploader.uploadToCloudinary(req.file);
+    req.body.admin.profilePhoto = uploadedResult?.secure_url;
+  }
+  const hashedPassword = await bcrypt.hash(
+    req.body.password,
+    Number(config.password_salt_rounds),
+  );
+  const result = await prisma.$transaction(async (tnx) => {
+    await tnx.user.create({
+      data: {
+        email: req.body.admin.email,
+        password: hashedPassword,
+      },
+    });
+
+    return await tnx.admin.create({
+      data: req.body.admin as Parameters<typeof tnx.admin.create>[0]['data'],
+    });
+  });
+  return result;
+};
+
 export const userService = {
   createPatient,
-  createDoctor
+  createDoctor,
+  createAdmin
 };
