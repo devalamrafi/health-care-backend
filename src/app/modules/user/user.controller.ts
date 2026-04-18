@@ -1,5 +1,7 @@
+import pick from "../../helper/pick";
 import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
+import { userFilterableFileds } from "./user.constant";
 import { userService } from "./user.service";
 import { Request, Response } from "express";
 
@@ -35,13 +37,19 @@ const createAdmin = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
-  const {page,limit, searchTerm, sortBy, sortOrder} = req.query
-  const result = await userService.getAllFromDB({page: Number(page), limit: Number(limit), searchTerm: String(searchTerm), sortBy: String(sortBy), sortOrder: String(sortOrder)});
+  //page, limit, sortBy, sortOrder -- pagination, sorting
+  //searchTerms, fields, searching, filtering
+
+  const filters = pick(req.query, userFilterableFileds);
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+
+  const result = await userService.getAllFromDB(filters, options);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    data: result,
+    meta: result.meta,
+    data: result.data,
     message: "User retrieved successfully",
   });
 });
