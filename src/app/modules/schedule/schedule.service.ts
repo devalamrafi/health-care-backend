@@ -2,6 +2,7 @@ import { addHours, addMinutes, format } from "date-fns";
 import prisma from "../../shared/prisma";
 import { pagintaionHelper } from "../../helper/paginationHelper";
 import { Prisma } from "@prisma/client";
+import { IJwtPayload } from "../../types/common";
 
 const insertIntoDB = async (data: any) => {
   const { startTime, endTime, startDate, endDate } = data;
@@ -70,7 +71,11 @@ const insertIntoDB = async (data: any) => {
   return schedules;
 };
 
-const getAllSchedulesForDoctor = async (filters: any, options: any) => {
+const getAllSchedulesForDoctor = async (
+  user: IJwtPayload,
+  filters: any,
+  options: any,
+) => {
   const { page, limit, skip, sortBy, sortOrder } =
     pagintaionHelper.calculatePagination(options);
   const { startDateTime: filterStartDateTime, endDateTime: filterEndDateTime } =
@@ -83,6 +88,19 @@ const getAllSchedulesForDoctor = async (filters: any, options: any) => {
           AND: andConditions,
         }
       : {};
+
+  const doctorSchedules = await prisma.doctorSchedule.findMany({
+    where: {
+      doctor: {
+        email: user.email,
+      },
+    },
+    select: {
+      scheduleId: true,
+    },
+  });
+
+  const doctorScheduleIds = doctorSchedules.map((ds) => ds.scheduleId);
 
   if (filterStartDateTime && filterEndDateTime) {
     andConditions.push({
@@ -101,14 +119,24 @@ const getAllSchedulesForDoctor = async (filters: any, options: any) => {
     });
   }
   const result = await prisma.schedule.findMany({
-    where: whereCondition,
+    where: {
+      ...whereCondition,
+      id: {
+        notIn: doctorScheduleIds,
+      },
+    },
     skip,
     take: limit,
     orderBy: { [sortBy]: sortOrder },
   });
 
   const total = await prisma.schedule.count({
-    where: whereCondition,
+    where: {
+      ...whereCondition,
+      id: {
+        notIn: doctorScheduleIds,
+      },
+    },
   });
   return {
     meta: {
@@ -128,7 +156,6 @@ const deleteScheduleFromDB = async (id: string) => {
   });
   return result;
 };
-
 
 export const scheduleService = {
   insertIntoDB,

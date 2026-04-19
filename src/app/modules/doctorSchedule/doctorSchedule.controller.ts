@@ -5,7 +5,7 @@ import { doctorScheduleService } from "./doctorSchedule.service";
 
 const createDoctorSchedule = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
-    const { user } = req;
+    const { user } = req.user;
     const result = await doctorScheduleService.createDoctorSchedule(
       user,
       req.body,
