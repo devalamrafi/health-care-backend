@@ -9,7 +9,7 @@ export const auth = (...roles: string[]) => {
     next: NextFunction,
   ) => {
     try {
-      const token = req.cookies.accessToken;
+      const token = req.cookies.accesToken;
       if (!token) {
         throw new Error("You're not authorized");
       }
@@ -18,6 +18,7 @@ export const auth = (...roles: string[]) => {
       if (roles.length && !roles.includes(verifyUser.role)) {
         throw new Error("You're not authorized");
       }
+      next();
     } catch (error) {
       next(error);
     }

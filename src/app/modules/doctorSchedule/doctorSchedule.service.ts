@@ -4,6 +4,7 @@ import { IJwtPayload } from "../../types/common";
 const createDoctorSchedule = async (user: IJwtPayload, payload: {
   scheduleIds:string[];
 }) => {
+
   const doctorData = await prisma.doctor.findUniqueOrThrow({
     where: {
       email: user.email,
@@ -15,11 +16,13 @@ const createDoctorSchedule = async (user: IJwtPayload, payload: {
     scheduleId,
   }));
 
-  return await prisma.doctorSchedule.createMany({
+  const result = await prisma.doctorSchedule.createMany({
     data: doctorScheduleData,
   });
 
-  return { user, payload };
+
+  return result
+
 };
 
 export const doctorScheduleService = {
